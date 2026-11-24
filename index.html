@@ -1,0 +1,2088 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Esquiva en el Cerro — Cultura Diaguita</title>
+  <style>
+    /* =====================================================================
+       PALETA ANDINA Y CERÁMICA DIAGUITA
+       Engobe crema (#F4EBD9), rojo óxido (#A63A24), negro carbón (#1E1916),
+       turquesa andino (#2D7D7E), ocre y tonos tierra de quebrada.
+       ===================================================================== */
+    :root {
+      --crema-engobe: #F4EBD9;
+      --crema-suave: #FAF4E8;
+      --crema-oscuro: #E5D5B7;
+      --rojo-oxido: #A63A24;
+      --rojo-oscuro: #7C2817;
+      --negro-carbon: #1E1916;
+      --turquesa-andino: #2D7D7E;
+      --turquesa-oscuro: #1F5B5C;
+      --ocre-cerro: #C68B44;
+      --tierra-oscura: #5D432C;
+      --sombra-bloque: 0 5px 0 var(--negro-carbon);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100dvh;
+      background-color: var(--crema-engobe);
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(166, 58, 36, 0.08) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(45, 125, 126, 0.08) 0%, transparent 45%);
+      color: var(--negro-carbon);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Bloqueo estricto de scroll cuando el juego está activo en móvil */
+    body.en-partida {
+      height: 100dvh;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    /* =====================================================================
+       GUARDA GEOMÉTRICA ESCALONADA DIAGUITA (CSS PURO)
+       ===================================================================== */
+    .guarda-escalonada {
+      width: 100%;
+      height: 16px;
+      flex-shrink: 0;
+      background-color: var(--crema-engobe);
+      background-image:
+        linear-gradient(90deg, var(--negro-carbon) 50%, transparent 50%),
+        linear-gradient(90deg, transparent 25%, var(--rojo-oxido) 25%, var(--rojo-oxido) 75%, transparent 75%);
+      background-size: 32px 8px, 32px 8px;
+      background-position: 0 0, 0 8px;
+      background-repeat: repeat-x;
+      border-bottom: 2px solid var(--negro-carbon);
+    }
+
+    .guarda-escalonada.inferior {
+      border-bottom: none;
+      border-top: 2px solid var(--negro-carbon);
+    }
+
+    /* =====================================================================
+       CABECERA PERSISTENTE
+       ===================================================================== */
+    header.cabecera-app {
+      width: 100%;
+      max-width: 720px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .logo-marca {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .logo-emblema {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--rojo-oxido);
+      border: 2.5px solid var(--negro-carbon);
+      box-shadow: 0 3px 0 var(--negro-carbon);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-textos h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .logo-textos span {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--rojo-oxido);
+    }
+
+    .btn-sonido {
+      background: var(--crema-suave);
+      color: var(--negro-carbon);
+      border: 2.5px solid var(--negro-carbon);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 0 var(--negro-carbon);
+      transition: transform 0.1s ease, background-color 0.15s ease;
+    }
+
+    .btn-sonido:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--negro-carbon);
+    }
+
+    .btn-sonido.activo {
+      background: #E2F2F2;
+    }
+
+    /* =====================================================================
+       CONTENEDOR PRINCIPAL Y VISTAS
+       ===================================================================== */
+    main.escenario-principal {
+      width: 100%;
+      max-width: 720px;
+      flex: 1;
+      padding: 6px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .vista {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      animation: entradaSuave 0.25s ease-out;
+    }
+
+    .vista.activa {
+      display: flex;
+    }
+
+    body.en-partida .vista#vistaJuego.activa {
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    @keyframes entradaSuave {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =====================================================================
+       TARJETA DE PORTADA ESCOLAR
+       ===================================================================== */
+    .tarjeta-ceramica {
+      width: 100%;
+      background: var(--crema-suave);
+      border: 3px solid var(--negro-carbon);
+      border-radius: 20px;
+      box-shadow: 0 6px 0 var(--negro-carbon);
+      overflow: hidden;
+    }
+
+    .hero-portada {
+      background: linear-gradient(135deg, var(--rojo-oxido) 0%, var(--rojo-oscuro) 100%);
+      color: var(--crema-engobe);
+      padding: 18px 16px;
+      text-align: center;
+      border-bottom: 3px solid var(--negro-carbon);
+    }
+
+    .chip-escolar {
+      display: inline-block;
+      background: var(--negro-carbon);
+      color: var(--crema-engobe);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .hero-portada h2 {
+      margin: 0 0 4px;
+      font-size: clamp(1.65rem, 5vw, 2.25rem);
+      font-weight: 900;
+      text-shadow: 2px 2px 0 var(--negro-carbon);
+    }
+
+    .hero-portada p {
+      margin: 0;
+      font-size: 0.94rem;
+      font-weight: 600;
+      opacity: 0.96;
+    }
+
+    .cuerpo-portada {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .bloque-historia-inicio {
+      background: var(--crema-engobe);
+      border: 2px solid var(--negro-carbon);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .canvas-preview-wrap {
+      width: 82px;
+      height: 82px;
+      border-radius: 14px;
+      border: 2px solid var(--negro-carbon);
+      background: #E9DEC6;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .canvas-preview-wrap canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .bloque-historia-inicio p {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.46;
+    }
+
+    .bloque-historia-inicio strong {
+      color: var(--rojo-oxido);
+    }
+
+    /* Selector de pieza cerámica diaguita */
+    .selector-pieza-box {
+      background: #EFE4CE;
+      border: 2px solid var(--negro-carbon);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+
+    .selector-titulo {
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--tierra-oscura);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .opciones-pieza {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-pieza {
+      background: var(--crema-suave);
+      border: 2.5px solid var(--negro-carbon);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: var(--negro-carbon);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-pieza.seleccionada {
+      background: #DFEFEF;
+      border-color: var(--turquesa-andino);
+      box-shadow: inset 0 0 0 1.5px var(--turquesa-andino);
+    }
+
+    /* Leyenda rápida de elementos */
+    .leyenda-objetos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: var(--crema-engobe);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(30, 25, 22, 0.25);
+    }
+
+    .item-leyenda {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Botones grandes accesibles */
+    .botones-portada {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .btn-grande {
+      width: 100%;
+      min-height: 52px;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 3px solid var(--negro-carbon);
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: var(--sombra-bloque);
+      transition: transform 0.1s ease;
+    }
+
+    .btn-grande:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 var(--negro-carbon);
+    }
+
+    .btn-desafio {
+      background: var(--rojo-oxido);
+      color: var(--crema-engobe);
+    }
+
+    .btn-practica {
+      background: var(--turquesa-andino);
+      color: #FFFFFF;
+    }
+
+    .btn-secundario {
+      background: var(--crema-oscuro);
+      color: var(--negro-carbon);
+      font-size: 0.92rem;
+      min-height: 46px;
+    }
+
+    /* =====================================================================
+       INTERFAZ DE PARTIDA (HUD + CANVAS RESPONSIVE + CONTROLES)
+       ===================================================================== */
+    .hud-superior {
+      width: 100%;
+      background: var(--crema-suave);
+      border: 2.5px solid var(--negro-carbon);
+      border-radius: 14px;
+      padding: 8px 10px;
+      box-shadow: 0 3px 0 var(--negro-carbon);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .hud-fila {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hud-badge {
+      background: var(--crema-engobe);
+      border: 2px solid var(--negro-carbon);
+      border-radius: 9px;
+      padding: 3px 9px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-badge.modo-desafio {
+      background: #FBE4DF;
+      color: var(--rojo-oscuro);
+    }
+
+    .hud-badge.modo-clase {
+      background: #E1F2F2;
+      color: var(--turquesa-oscuro);
+    }
+
+    .barra-progreso-fichas {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .track-progreso {
+      flex: 1;
+      height: 10px;
+      background: var(--crema-oscuro);
+      border: 2px solid var(--negro-carbon);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .relleno-progreso {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--turquesa-andino), var(--ocre-cerro));
+      transition: width 0.3s ease;
+    }
+
+    /* Contenedor del Canvas con touch-action: none y overflow: hidden */
+    .marco-canvas {
+      width: 100%;
+      flex: 1;
+      min-height: 280px;
+      margin: 8px 0;
+      background: var(--negro-carbon);
+      padding: 5px;
+      border-radius: 18px;
+      box-shadow: 0 5px 0 var(--negro-carbon);
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+    }
+
+    canvas#juegoCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 13px;
+      background: var(--crema-engobe);
+      touch-action: none;
+      user-select: none;
+      cursor: grab;
+    }
+
+    canvas#juegoCanvas:active {
+      cursor: grabbing;
+    }
+
+    /* Aviso no intrusivo en Modo Clase al chocar */
+    .aviso-clase-banner {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      background: var(--negro-carbon);
+      color: var(--crema-engobe);
+      border: 2.5px solid var(--ocre-cerro);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 0.84rem;
+      font-weight: 800;
+      text-align: center;
+      width: calc(100% - 28px);
+      max-width: 390px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 15;
+    }
+
+    .aviso-clase-banner.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .barra-inferior-juego {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-control-juego {
+      background: var(--crema-suave);
+      color: var(--negro-carbon);
+      border: 2.5px solid var(--negro-carbon);
+      border-radius: 12px;
+      padding: 9px 8px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--negro-carbon);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .btn-control-juego:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 var(--negro-carbon);
+    }
+
+    /* =====================================================================
+       MODAL DE FICHA HISTÓRICA
+       ===================================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 25, 22, 0.75);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .modal-overlay.abierto {
+      display: flex;
+      animation: entradaSuave 0.2s ease-out;
+    }
+
+    .modal-caja {
+      width: 100%;
+      max-width: 480px;
+      max-height: 90dvh;
+      overflow-y: auto;
+      background: var(--crema-suave);
+      border: 3px solid var(--negro-carbon);
+      border-radius: 20px;
+      box-shadow: 0 8px 0 var(--negro-carbon);
+    }
+
+    .modal-header {
+      background: var(--turquesa-andino);
+      color: #FFFFFF;
+      padding: 14px 16px;
+      border-bottom: 3px solid var(--negro-carbon);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 900;
+    }
+
+    .modal-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ilustracion-ficha-box {
+      width: 100%;
+      height: 132px;
+      background: var(--crema-engobe);
+      border: 2.5px solid var(--negro-carbon);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .ilustracion-ficha-box canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .texto-ficha {
+      margin: 0;
+      font-size: 0.93rem;
+      line-height: 1.52;
+    }
+
+    .destacado-arqueo {
+      background: #EFE4CE;
+      border-left: 5px solid var(--rojo-oxido);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 0.83rem;
+      font-weight: 700;
+    }
+
+    /* =====================================================================
+       PANTALLA FINAL / RESUMEN DE TRAVESÍA
+       ===================================================================== */
+    .grilla-resultados {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .caja-stat {
+      background: var(--crema-engobe);
+      border: 2px solid var(--negro-carbon);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .caja-stat .num {
+      display: block;
+      font-size: 1.35rem;
+      font-weight: 900;
+      color: var(--rojo-oxido);
+    }
+
+    .caja-stat .lbl {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--tierra-oscura);
+    }
+
+    .desglose-items {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: #EFE4CE;
+      border: 2px solid var(--negro-carbon);
+      border-radius: 12px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .desglose-items span.cant {
+      display: block;
+      font-size: 1.05rem;
+      color: var(--turquesa-oscuro);
+      font-weight: 900;
+    }
+
+    .resumen-partida {
+      background: var(--crema-engobe);
+      border: 2px dashed var(--negro-carbon);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 0.83rem;
+      line-height: 1.48;
+      text-align: center;
+    }
+
+    @media (max-width: 440px) {
+      .bloque-historia-inicio {
+        flex-direction: column;
+        text-align: center;
+      }
+      .leyenda-objetos {
+        grid-template-columns: 1fr;
+      }
+      .desglose-items {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Guarda escalonada diaguita superior -->
+  <div class="guarda-escalonada" aria-hidden="true"></div>
+
+  <!-- Cabecera persistente -->
+  <header class="cabecera-app">
+    <div class="logo-marca" id="btnInicioLogo" title="Volver a la portada">
+      <div class="logo-emblema" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M5 14C5 9.5 8.5 7 12.5 7C15.5 7 17.5 8.5 18.5 10.5L21 9.5L19.5 13.5C19.5 17.5 16 20 11.5 20C7.5 20 5 17.5 5 14Z" fill="#F4EBD9" stroke="#1E1916" stroke-width="2"/>
+          <path d="M6 12C4 12 3.5 14.5 5.5 15.5" stroke="#F4EBD9" stroke-width="2" stroke-linecap="round"/>
+          <path d="M8 14H16" stroke="#A63A24" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="logo-textos">
+        <h1>Esquiva en el Cerro</h1>
+        <span>Cultura Diaguita · Noroeste Argentino</span>
+      </div>
+    </div>
+
+    <button type="button" class="btn-sonido activo" id="btnToggleSonido" aria-label="Activar o silenciar sonido">
+      <span id="iconoSonido">🔊</span>
+      <span id="textoSonido">Sonido</span>
+    </button>
+  </header>
+
+  <main class="escenario-principal">
+
+    <!-- ===================================================================
+         VISTA 1: PORTADA
+         =================================================================== -->
+    <section id="vistaPortada" class="vista activa" aria-label="Portada del juego">
+      <div class="tarjeta-ceramica">
+        <div class="hero-portada">
+          <span class="chip-escolar">Historia y Pueblos Originarios</span>
+          <h2>Esquiva en el Cerro</h2>
+          <p>Travesía por las quebradas y la alfarería diaguita</p>
+        </div>
+
+        <div class="cuerpo-portada">
+          <div class="bloque-historia-inicio">
+            <div class="canvas-preview-wrap">
+              <canvas id="canvasPreviewPieza" width="164" height="164"></canvas>
+            </div>
+            <p>
+              En los valles y cerros del noroeste argentino, los pueblos <strong>diaguitas</strong> crearon extraordinarias piezas de cerámica con <strong>engobe crema, rojo óxido y negro</strong>. Guiá tu vasija por el sendero de la quebrada, esquivá los derrumbes y recolectá agua, algarrobo y símbolos ancestrales.
+            </p>
+          </div>
+
+          <div class="selector-pieza-box">
+            <span class="selector-titulo">Elegí tu pieza cerámica para la travesía:</span>
+            <div class="opciones-pieza">
+              <button type="button" class="btn-pieza seleccionada" id="btnElegirJarro">
+                <span>🦆</span>
+                <span>Jarro Pato</span>
+              </button>
+              <button type="button" class="btn-pieza" id="btnElegirPuco">
+                <span>🥣</span>
+                <span>Puco Decorado</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="leyenda-objetos">
+            <div class="item-leyenda"><span>🏺</span><span>Vasija sana (+15 pts)</span></div>
+            <div class="item-leyenda"><span>💧</span><span>Agua de acequia (+10 pts)</span></div>
+            <div class="item-leyenda"><span>🌿</span><span>Algarrobo (+10 pts)</span></div>
+            <div class="item-leyenda"><span>✨</span><span>Símbolo (+25 pts + Ficha)</span></div>
+          </div>
+
+          <div class="botones-portada">
+            <button type="button" class="btn-grande btn-desafio" id="btnModoDesafio">
+              <span>⛰️</span>
+              <span>Jugar Modo Desafío</span>
+            </button>
+            <button type="button" class="btn-grande btn-practica" id="btnModoPractica">
+              <span>🏫</span>
+              <span>Modo Clase / Práctica</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         VISTA 2: JUEGO 2D EN CANVAS
+         =================================================================== -->
+    <section id="vistaJuego" class="vista" aria-label="Área de juego">
+      <div class="hud-superior">
+        <div class="hud-fila">
+          <div class="hud-badge" id="hudModoBadge">Modo Clase</div>
+          <div class="hud-badge" id="hudVidasBadge">🏺 Integridad: ❤️❤️❤️</div>
+          <div class="hud-badge">⭐ <span id="hudPuntaje">0</span> pts</div>
+        </div>
+
+        <div class="barra-progreso-fichas">
+          <span>Saberes: <strong id="hudFichasCount">0/5</strong></span>
+          <div class="track-progreso">
+            <div class="relleno-progreso" id="hudProgresoBar"></div>
+          </div>
+          <span id="hudPiezaNombre">Jarro Pato</span>
+        </div>
+      </div>
+
+      <div class="marco-canvas" id="marcoCanvas">
+        <div class="aviso-clase-banner" id="avisoClaseBanner">
+          ¡Cuidado con el derrumbe! En Modo Clase continuamos el recorrido.
+        </div>
+        <canvas id="juegoCanvas"></canvas>
+      </div>
+
+      <div class="barra-inferior-juego">
+        <button type="button" class="btn-control-juego" id="btnVolverMenuJuego">
+          <span>🏠</span><span>Portada</span>
+        </button>
+        <button type="button" class="btn-control-juego" id="btnCambiarPiezaJuego">
+          <span>🔄</span><span>Cambiar Pieza</span>
+        </button>
+        <button type="button" class="btn-control-juego" id="btnPausarJuego">
+          <span id="iconoPausa">⏸️</span><span id="textoPausa">Pausa</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===================================================================
+         VISTA 3: PANTALLA FINAL / RESUMEN DE TRAVESÍA
+         =================================================================== -->
+    <section id="vistaFinal" class="vista" aria-label="Resumen de partida">
+      <div class="tarjeta-ceramica">
+        <div class="hero-portada" id="heroFinal">
+          <span class="chip-escolar" id="chipEstadoFinal">Travesía Completada</span>
+          <h2 id="tituloFinal">¡Saberes del Cerro Reunidos!</h2>
+          <p id="subtituloFinal">Completaste el recorrido por la historia y cerámica diaguita</p>
+        </div>
+
+        <div class="cuerpo-portada">
+          <div class="grilla-resultados">
+            <div class="caja-stat">
+              <span class="num" id="finalPuntaje">0</span>
+              <span class="lbl">Puntaje Total</span>
+            </div>
+            <div class="caja-stat">
+              <span class="num" id="finalFichas">0 / 5</span>
+              <span class="lbl">Fichas Históricas</span>
+            </div>
+          </div>
+
+          <div class="desglose-items">
+            <div><span class="cant" id="statVasijas">0</span>🏺 Vasijas</div>
+            <div><span class="cant" id="statAgua">0</span>💧 Agua</div>
+            <div><span class="cant" id="statAlgarrobo">0</span>🌿 Algarrobo</div>
+            <div><span class="cant" id="statSimbolos">0</span>✨ Símbolos</div>
+          </div>
+
+          <div class="resumen-partida" id="resumenPartidaFinal"></div>
+
+          <div class="botones-portada">
+            <button type="button" class="btn-grande btn-desafio" id="btnReiniciarPartida">
+              <span>🔁</span>
+              <span>Volver a Jugar</span>
+            </button>
+            <button type="button" class="btn-grande btn-secundario" id="btnIrPortadaFinal">
+              <span>🏠</span>
+              <span>Cambiar de Modo / Inicio</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       MODAL: TARJETA HISTÓRICA EDUCATIVA (5 FICHAS PROGRESIVAS)
+       ===================================================================== -->
+  <div class="modal-overlay" id="modalFichaHistoria" role="dialog" aria-modal="true" aria-labelledby="fichaTitulo">
+    <div class="modal-caja">
+      <div class="modal-header">
+        <h3 id="fichaTitulo">Ficha Histórica 1/5</h3>
+        <span style="font-size:0.82rem; font-weight:800;" id="fichaEtiqueta">Saber Diaguita</span>
+      </div>
+      <div class="modal-body">
+        <div class="ilustracion-ficha-box">
+          <canvas id="canvasFichaIlustracion" width="420" height="132"></canvas>
+        </div>
+        <p class="texto-ficha" id="fichaTexto"></p>
+        <div class="destacado-arqueo" id="fichaDatoArqueo"></div>
+        <button type="button" class="btn-grande btn-practica" id="btnContinuarRecorrido">
+          <span>Continuar recorrido</span>
+          <span>➡️</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guarda escalonada diaguita inferior -->
+  <div class="guarda-escalonada inferior" aria-hidden="true"></div>
+
+  <script>
+    /* =======================================================================
+       1. AUDIO PROCEDURAL CON WEB AUDIO API (ESCALA PENTATÓNICA ANDINA)
+       ======================================================================= */
+    class AudioCeramico {
+      constructor() {
+        this.ctx = null;
+        this.activo = true;
+        this.escala = [293.66, 349.23, 392.00, 440.00, 523.25, 587.33, 698.46, 880.00];
+      }
+
+      desbloquear() {
+        if (!this.ctx) {
+          const Ctx = window.AudioContext || window.webkitAudioContext;
+          if (Ctx) this.ctx = new Ctx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      alternar() {
+        this.activo = !this.activo;
+        if (this.activo) {
+          this.desbloquear();
+          this.nota(440, 0.14, 'triangle', 0.15);
+        }
+        return this.activo;
+      }
+
+      nota(freq, dur = 0.16, tipo = 'sine', vol = 0.15, delay = 0) {
+        if (!this.activo) return;
+        this.desbloquear();
+        if (!this.ctx) return;
+
+        const t0 = this.ctx.currentTime + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = tipo;
+        osc.frequency.setValueAtTime(freq, t0);
+
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(vol, t0 + 0.018);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(t0);
+        osc.stop(t0 + dur + 0.02);
+      }
+
+      recolectarComun() {
+        const f = this.escala[Math.floor(Math.random() * 5)];
+        this.nota(f, 0.14, 'sine', 0.15, 0);
+        this.nota(f * 1.5, 0.12, 'triangle', 0.10, 0.05);
+      }
+
+      recolectarSimbolo() {
+        [392.00, 523.25, 659.25].forEach((f, i) => {
+          this.nota(f, 0.22, 'triangle', 0.16, i * 0.07);
+        });
+      }
+
+      alertaChoque() {
+        this.nota(164.81, 0.16, 'triangle', 0.18, 0);
+        this.nota(130.81, 0.22, 'sine', 0.18, 0.08);
+      }
+
+      fanfarriaFicha() {
+        [293.66, 349.23, 440.00, 587.33].forEach((f, i) => {
+          this.nota(f, 0.28, 'triangle', 0.16, i * 0.09);
+        });
+      }
+
+      victoriaFinal() {
+        [293.66, 349.23, 440.00, 523.25, 587.33, 698.46].forEach((f, i) => {
+          this.nota(f, 0.34, 'triangle', 0.17, i * 0.09);
+        });
+      }
+    }
+
+    const sonido = new AudioCeramico();
+
+    /* =======================================================================
+       2. FICHAS HISTÓRICAS DIAGUITAS (5 HITOS DE LA TRAVESÍA)
+       ======================================================================= */
+    const FICHAS_HISTORICAS = [
+      {
+        titulo: "1. El Jarro Pato y la Cerámica Zoomorfa",
+        etiqueta: "Alfarería Ritual",
+        texto: "El Jarro Pato es una de las vasijas más emblemáticas de la cultura Diaguita. Posee un cuerpo globular, un asa puente y un vertedero modelado con rasgos de ave o rostro humano. Se utilizaba en ceremonias comunitarias para servir bebidas rituales como la aloja de algarrobo.",
+        datoArqueo: "Dato arqueológico: Los alfareros diaguitas modelaban a mano sin torno, logrando paredes muy delgadas y simétricas.",
+        ilustracion: "jarro_pato"
+      },
+      {
+        titulo: "2. Colores de la Tierra: Engobe y Pigmentos",
+        etiqueta: "Tecnología Cerámica",
+        texto: "Antes de hornear las piezas, los ceramistas aplicaban un baño de arcilla fina llamada engobe (de tono crema o rojo) para alisar la superficie. Luego pintaban diseños geométricos con pinceles de pelo usando óxido de hierro para el rojo y óxido de manganeso o carbón para el negro.",
+        datoArqueo: "Dato arqueológico: La combinación de crema, rojo óxido y negro carbón resiste intacta tras más de mil años bajo tierra.",
+        ilustracion: "pigmentos"
+      },
+      {
+        titulo: "3. Urnas Santamarianas y Estilo Belén",
+        etiqueta: "Simbolismo y Arte",
+        texto: "En los Valles Calchaquíes se destacaron las grandes urnas funerarias estilo Santamariano y Belén. Sus superficies están cubiertas por guardas escalonadas, serpientes bicéfalas, suris (ñandúes) y sapos, animales asociados simbólicamente con la llegada de las lluvias y la fertilidad.",
+        datoArqueo: "Dato arqueológico: Cada valle desarrolló variantes propias en los trazos geométricos que identificaban a sus comunidades.",
+        ilustracion: "urnas"
+      },
+      {
+        titulo: "4. Agua de Acequia y El Algarrobo",
+        etiqueta: "Vida en los Valles",
+        texto: "Para cultivar maíz, zapallo, quínoa y porotos en quebradas áridas, los diaguitas construyeron canales de riego y andenes escalonados en las laderas. Además, recolectaban las vainas dulces del algarrobo negro y blanco para elaborar harina (patay) y bebidas fermentadas (aloja).",
+        datoArqueo: "Dato arqueológico: El algarrobo era llamado 'el árbol' por excelencia debido a su valor alimenticio y su sombra en el valle.",
+        ilustracion: "agua_algarrobo"
+      },
+      {
+        titulo: "5. Caminos del Valle y Resistencia Diaguita",
+        etiqueta: "Historia y Memoria Viva",
+        texto: "Una red de senderos conectaba las aldeas y pukaras (poblados fortificados en lo alto de los cerros) permitiendo el intercambio con caravanas de llamas. Durante más de cien años, las confederaciones diaguitas defendieron su territorio en las Guerras Calchaquíes, dejando un legado vivo hasta hoy.",
+        datoArqueo: "Dato arqueológico: Sitios como Quilmes, Tolombón y Shincal testimonian la organización social y arquitectónica diaguita.",
+        ilustracion: "caminos_pukara"
+      }
+    ];
+
+    /* =======================================================================
+       3. ESTADO DEL MOTOR 2D Y MECÁNICAS DE JUEGO
+       ======================================================================= */
+    const canvas = document.getElementById('juegoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const juego = {
+      activo: false,
+      pausado: false,
+      fichaAbierta: false,
+      modo: 'practica', // 'desafio' | 'practica'
+      piezaTipo: 'jarro', // 'jarro' | 'puco'
+      puntaje: 0,
+      vidas: 3,
+      vidasMax: 3,
+      fichasDesbloqueadas: 0,
+      proximoUmbralFicha: 65,
+      distanciaRecorrida: 0,
+      velocidadBase: 235,
+      invulnerableTiempo: 0,
+      avisoClaseTimeout: null,
+      stats: {
+        vasijas: 0,
+        agua: 0,
+        algarrobo: 0,
+        simbolos: 0
+      },
+      jugador: {
+        x: 0.5,
+        y: 0.84,
+        objetivoX: 0.5,
+        radio: 0.068,
+        inclinacion: 0
+      },
+      objetos: [],
+      particulas: [],
+      textosFlotantes: [],
+      decoracionesSendero: [],
+      tiempoSpawn: 0,
+      arrastrando: false,
+      offsetArrastreX: 0,
+      teclas: { izq: false, der: false }
+    };
+
+    function generarDecoracionInicial() {
+      juego.decoracionesSendero = [];
+      for (let i = 0; i < 14; i++) {
+        juego.decoracionesSendero.push({
+          y: i / 14,
+          lado: i % 2 === 0 ? -1 : 1,
+          tipo: i % 3 === 0 ? 'cardon' : 'piedra',
+          escala: 0.75 + Math.random() * 0.45
+        });
+      }
+    }
+
+    function reiniciarEstadoPartida() {
+      juego.activo = true;
+      juego.pausado = false;
+      juego.fichaAbierta = false;
+      juego.puntaje = 0;
+      juego.vidas = 3;
+      juego.fichasDesbloqueadas = 0;
+      juego.proximoUmbralFicha = 65;
+      juego.distanciaRecorrida = 0;
+      juego.invulnerableTiempo = 0;
+      juego.stats = { vasijas: 0, agua: 0, algarrobo: 0, simbolos: 0 };
+      juego.jugador.x = 0.5;
+      juego.jugador.objetivoX = 0.5;
+      juego.jugador.inclinacion = 0;
+      juego.objetos = [];
+      juego.particulas = [];
+      juego.textosFlotantes = [];
+      juego.tiempoSpawn = 0.35;
+      generarDecoracionInicial();
+      actualizarHUD();
+      document.getElementById('iconoPausa').textContent = '⏸️';
+      document.getElementById('textoPausa').textContent = 'Pausa';
+    }
+
+    function actualizarHUD() {
+      const badgeModo = document.getElementById('hudModoBadge');
+      const badgeVidas = document.getElementById('hudVidasBadge');
+
+      if (juego.modo === 'desafio') {
+        badgeModo.textContent = '⛰️ Modo Desafío';
+        badgeModo.className = 'hud-badge modo-desafio';
+        const corazones = '❤️'.repeat(Math.max(0, juego.vidas)) + '🖤'.repeat(Math.max(0, juego.vidasMax - juego.vidas));
+        badgeVidas.textContent = `Vasija: ${corazones}`;
+      } else {
+        badgeModo.textContent = '🏫 Modo Clase';
+        badgeModo.className = 'hud-badge modo-clase';
+        badgeVidas.textContent = '🛡️ Práctica Libre';
+      }
+
+      document.getElementById('hudPuntaje').textContent = juego.puntaje;
+      document.getElementById('hudFichasCount').textContent = `${juego.fichasDesbloqueadas}/5`;
+      document.getElementById('hudProgresoBar').style.width = `${(juego.fichasDesbloqueadas / 5) * 100}%`;
+      document.getElementById('hudPiezaNombre').textContent = juego.piezaTipo === 'jarro' ? 'Jarro Pato' : 'Puco';
+    }
+
+    /* =======================================================================
+       4. GENERACIÓN DE OBSTÁCULOS Y ELEMENTOS CULTURALES
+       ======================================================================= */
+    function generarObjetoSendero() {
+      const x = 0.18 + Math.random() * 0.64;
+      const r = Math.random();
+
+      let categoria = 'positivo';
+      let subtipo = 'agua';
+      let radio = 0.048;
+      let velMult = 1.0;
+
+      if (r < 0.42) {
+        categoria = 'peligro';
+        const rp = Math.random();
+        if (rp < 0.45) {
+          subtipo = 'piedra';
+          radio = 0.052;
+          velMult = 1.12;
+        } else if (rp < 0.78) {
+          subtipo = 'derrumbe';
+          radio = 0.064;
+          velMult = 0.96;
+        } else {
+          subtipo = 'grieta';
+          radio = 0.060;
+          velMult = 0.88;
+        }
+      } else {
+        categoria = 'positivo';
+        const rb = Math.random();
+        if (rb < 0.18) {
+          subtipo = 'simbolo';
+          radio = 0.054;
+          velMult = 0.92;
+        } else if (rb < 0.46) {
+          subtipo = 'vasija';
+          radio = 0.050;
+          velMult = 1.0;
+        } else if (rb < 0.73) {
+          subtipo = 'agua';
+          radio = 0.046;
+          velMult = 1.02;
+        } else {
+          subtipo = 'algarrobo';
+          radio = 0.048;
+          velMult = 0.98;
+        }
+      }
+
+      juego.objetos.push({
+        x,
+        y: -0.08,
+        categoria,
+        subtipo,
+        radio,
+        velMult,
+        rot: Math.random() * Math.PI * 2,
+        velRot: (Math.random() - 0.5) * 3.5,
+        pulso: Math.random() * Math.PI * 2
+      });
+    }
+
+    function crearParticulas(nx, ny, colores, cantidad = 12) {
+      for (let i = 0; i < cantidad; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const vel = 0.08 + Math.random() * 0.25;
+        juego.particulas.push({
+          x: nx,
+          y: ny,
+          vx: Math.cos(ang) * vel,
+          vy: Math.sin(ang) * vel,
+          vida: 0.45 + Math.random() * 0.35,
+          vidaMax: 0.8,
+          tam: 3 + Math.random() * 4,
+          color: colores[Math.floor(Math.random() * colores.length)]
+        });
+      }
+    }
+
+    function crearTextoFlotante(nx, ny, texto, color) {
+      juego.textosFlotantes.push({
+        x: nx,
+        y: ny,
+        texto,
+        color,
+        vida: 0.95,
+        vidaMax: 0.95
+      });
+    }
+
+    function mostrarAvisoModoClase(mensaje) {
+      const banner = document.getElementById('avisoClaseBanner');
+      banner.textContent = mensaje;
+      banner.classList.add('visible');
+      if (juego.avisoClaseTimeout) clearTimeout(juego.avisoClaseTimeout);
+      juego.avisoClaseTimeout = setTimeout(() => {
+        banner.classList.remove('visible');
+      }, 2200);
+    }
+
+    /* =======================================================================
+       5. ACTUALIZACIÓN FÍSICA Y DETECCIÓN DE COLISIONES
+       ======================================================================= */
+    function actualizarJuego(dt) {
+      if (!juego.activo || juego.pausado || juego.fichaAbierta) return;
+
+      const factorNivel = 1 + juego.fichasDesbloqueadas * 0.11;
+      const velocidadActual = (juego.velocidadBase * factorNivel) / Math.max(480, canvas.height);
+
+      juego.distanciaRecorrida += velocidadActual * dt;
+      if (juego.invulnerableTiempo > 0) {
+        juego.invulnerableTiempo = Math.max(0, juego.invulnerableTiempo - dt);
+      }
+
+      const velTeclado = 0.92;
+      if (juego.teclas.izq) {
+        juego.jugador.objetivoX -= velTeclado * dt;
+      }
+      if (juego.teclas.der) {
+        juego.jugador.objetivoX += velTeclado * dt;
+      }
+
+      juego.jugador.objetivoX = Math.max(0.14, Math.min(0.86, juego.jugador.objetivoX));
+
+      const prevX = juego.jugador.x;
+      juego.jugador.x += (juego.jugador.objetivoX - juego.jugador.x) * Math.min(1, dt * 18);
+      const dx = juego.jugador.x - prevX;
+      juego.jugador.inclinacion = Math.max(-0.28, Math.min(0.28, dx * 18));
+
+      for (const dec of juego.decoracionesSendero) {
+        dec.y += velocidadActual * dt * 0.95;
+        if (dec.y > 1.08) {
+          dec.y = -0.08;
+          dec.tipo = Math.random() < 0.45 ? 'cardon' : 'piedra';
+          dec.escala = 0.75 + Math.random() * 0.45;
+        }
+      }
+
+      juego.tiempoSpawn -= dt;
+      if (juego.tiempoSpawn <= 0) {
+        generarObjetoSendero();
+        const intervaloBase = juego.modo === 'desafio'
+          ? Math.max(0.52, 0.95 - juego.fichasDesbloqueadas * 0.07)
+          : 0.88;
+        juego.tiempoSpawn = intervaloBase * (0.8 + Math.random() * 0.4);
+      }
+
+      const jx = juego.jugador.x;
+      const jy = juego.jugador.y;
+      const jr = juego.jugador.radio * 0.86;
+
+      for (let i = juego.objetos.length - 1; i >= 0; i--) {
+        const obj = juego.objetos[i];
+        obj.y += velocidadActual * obj.velMult * dt;
+        obj.pulso += dt * 5;
+        if (obj.subtipo === 'piedra') {
+          obj.rot += obj.velRot * dt;
+        }
+
+        const aspect = canvas.width / Math.max(1, canvas.height);
+        const distX = (obj.x - jx) * aspect;
+        const distY = obj.y - jy;
+        const dist = Math.hypot(distX, distY);
+
+        if (dist < (jr + obj.radio * 0.85)) {
+          procesarColision(obj);
+          juego.objetos.splice(i, 1);
+          continue;
+        }
+
+        if (obj.y > 1.12) {
+          juego.objetos.splice(i, 1);
+        }
+      }
+
+      for (let i = juego.particulas.length - 1; i >= 0; i--) {
+        const p = juego.particulas[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vida -= dt;
+        if (p.vida <= 0) juego.particulas.splice(i, 1);
+      }
+
+      for (let i = juego.textosFlotantes.length - 1; i >= 0; i--) {
+        const t = juego.textosFlotantes[i];
+        t.y -= 0.14 * dt;
+        t.vida -= dt;
+        if (t.vida <= 0) juego.textosFlotantes.splice(i, 1);
+      }
+    }
+
+    function procesarColision(obj) {
+      if (obj.categoria === 'positivo') {
+        let puntos = 10;
+        let etiqueta = '+10';
+        let color = '#2D7D7E';
+        let disparaFichaPorSimbolo = false;
+
+        if (obj.subtipo === 'vasija') {
+          puntos = 15;
+          etiqueta = '+15 Vasija';
+          color = '#A63A24';
+          juego.stats.vasijas++;
+          sonido.recolectarComun();
+          crearParticulas(obj.x, obj.y, ['#A63A24', '#F4EBD9', '#C68B44'], 12);
+        } else if (obj.subtipo === 'agua') {
+          puntos = 10;
+          etiqueta = '+10 Agua';
+          color = '#2D7D7E';
+          juego.stats.agua++;
+          sonido.recolectarComun();
+          crearParticulas(obj.x, obj.y, ['#2D7D7E', '#7CD4D6', '#F4EBD9'], 12);
+        } else if (obj.subtipo === 'algarrobo') {
+          puntos = 10;
+          etiqueta = '+10 Algarrobo';
+          color = '#5A7D3C';
+          juego.stats.algarrobo++;
+          sonido.recolectarComun();
+          crearParticulas(obj.x, obj.y, ['#C68B44', '#6E8B3D', '#F4EBD9'], 12);
+        } else if (obj.subtipo === 'simbolo') {
+          puntos = 25;
+          etiqueta = '+25 ¡Saber Diaguita!';
+          color = '#B87314';
+          juego.stats.simbolos++;
+          disparaFichaPorSimbolo = true;
+          sonido.recolectarSimbolo();
+          crearParticulas(obj.x, obj.y, ['#E8B04B', '#2D7D7E', '#A63A24'], 18);
+        }
+
+        juego.puntaje += puntos;
+        crearTextoFlotante(obj.x, obj.y - 0.03, etiqueta, color);
+        actualizarHUD();
+
+        if (juego.fichasDesbloqueadas < FICHAS_HISTORICAS.length) {
+          if (disparaFichaPorSimbolo || juego.puntaje >= juego.proximoUmbralFicha) {
+            juego.proximoUmbralFicha = juego.puntaje + 65;
+            abrirFichaHistorica(juego.fichasDesbloqueadas);
+          }
+        }
+      } else {
+        if (juego.invulnerableTiempo > 0) return;
+
+        sonido.alertaChoque();
+        crearParticulas(juego.jugador.x, juego.jugador.y, ['#5D432C', '#1E1916', '#A63A24'], 16);
+
+        if (juego.modo === 'practica') {
+          juego.invulnerableTiempo = 1.2;
+          crearTextoFlotante(juego.jugador.x, juego.jugador.y - 0.05, '¡Cuidado con el derrumbe!', '#A63A24');
+          mostrarAvisoModoClase('⚠️ ¡Cuidado con el derrumbe! En Modo Clase continuamos sin perder vidas.');
+        } else {
+          juego.vidas--;
+          juego.invulnerableTiempo = 1.5;
+          crearTextoFlotante(juego.jugador.x, juego.jugador.y - 0.05, '¡Golpe en la vasija!', '#A63A24');
+          actualizarHUD();
+
+          if (juego.vidas <= 0) {
+            finalizarPartida(false);
+          }
+        }
+      }
+    }
+
+    /* =======================================================================
+       6. RENDERIZADO 2D PROCEDURAL EN HTML5 CANVAS
+       ======================================================================= */
+    function ajustarCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+    }
+
+    window.addEventListener('resize', ajustarCanvas);
+
+    function dibujarEscenaJuego() {
+      const W = canvas.width;
+      const H = canvas.height;
+      if (W === 0 || H === 0) return;
+
+      const gradCielo = ctx.createLinearGradient(0, 0, 0, H * 0.32);
+      gradCielo.addColorStop(0, '#E8C594');
+      gradCielo.addColorStop(1, '#F4EBD9');
+      ctx.fillStyle = gradCielo;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = '#C68B44';
+      ctx.beginPath();
+      ctx.moveTo(0, H * 0.24);
+      ctx.lineTo(W * 0.18, H * 0.08);
+      ctx.lineTo(W * 0.42, H * 0.19);
+      ctx.lineTo(W * 0.68, H * 0.06);
+      ctx.lineTo(W * 0.88, H * 0.17);
+      ctx.lineTo(W, H * 0.10);
+      ctx.lineTo(W, H * 0.28);
+      ctx.lineTo(0, H * 0.28);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#B86B43';
+      ctx.fillRect(0, H * 0.18, W, H * 0.82);
+
+      const margenSendero = W * 0.11;
+      const anchoSendero = W - margenSendero * 2;
+      ctx.fillStyle = '#E6D4B5';
+      ctx.fillRect(margenSendero, H * 0.16, anchoSendero, H * 0.84);
+
+      ctx.fillStyle = '#1E1916';
+      ctx.fillRect(margenSendero - 5, H * 0.16, 5, H * 0.84);
+      ctx.fillRect(margenSendero + anchoSendero, H * 0.16, 5, H * 0.84);
+
+      const pasoMarca = H * 0.14;
+      const offsetY = (juego.distanciaRecorrida * H) % pasoMarca;
+      ctx.fillStyle = 'rgba(93, 67, 44, 0.14)';
+      for (let y = H * 0.16 + offsetY - pasoMarca; y < H; y += pasoMarca) {
+        if (y < H * 0.17) continue;
+        ctx.fillRect(W * 0.34, y, W * 0.08, 5);
+        ctx.fillRect(W * 0.58, y + pasoMarca * 0.45, W * 0.08, 5);
+      }
+
+      for (const dec of juego.decoracionesSendero) {
+        const dy = dec.y * H;
+        if (dy < H * 0.18) continue;
+        const dx = dec.lado < 0 ? margenSendero * 0.5 : W - margenSendero * 0.5;
+        if (dec.tipo === 'cardon') {
+          dibujarCardon(ctx, dx, dy, W * 0.045 * dec.escala);
+        } else {
+          dibujarPiedraLateral(ctx, dx, dy, W * 0.036 * dec.escala);
+        }
+      }
+
+      for (const obj of juego.objetos) {
+        const ox = obj.x * W;
+        const oy = obj.y * H;
+        const orad = obj.radio * Math.min(W, H);
+        dibujarObjetoSendero(ctx, obj, ox, oy, orad);
+      }
+
+      const parpadeo = juego.invulnerableTiempo > 0 && Math.floor(juego.invulnerableTiempo * 16) % 2 === 0;
+      if (!parpadeo) {
+        const px = juego.jugador.x * W;
+        const py = juego.jugador.y * H;
+        const prad = juego.jugador.radio * Math.min(W, H);
+
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(juego.jugador.inclinacion);
+        if (juego.piezaTipo === 'jarro') {
+          dibujarJarroPato(ctx, 0, 0, prad * 2.1);
+        } else {
+          dibujarPucoDiaguita(ctx, 0, 0, prad * 2.1);
+        }
+        ctx.restore();
+      }
+
+      for (const p of juego.particulas) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.vida / p.vidaMax);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x * W, p.y * H, p.tam, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (const t of juego.textosFlotantes) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, t.vida / t.vidaMax);
+        ctx.font = `900 ${Math.max(14, Math.round(W * 0.036))}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#F4EBD9';
+        ctx.strokeText(t.texto, t.x * W, t.y * H);
+        ctx.fillStyle = t.color;
+        ctx.fillText(t.texto, t.x * W, t.y * H);
+        ctx.restore();
+      }
+
+      if (juego.pausado && !juego.fichaAbierta) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(30, 25, 22, 0.55)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#F4EBD9';
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 4;
+        ctx.font = `900 ${Math.max(20, Math.round(W * 0.055))}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.strokeText('PAUSA', W * 0.5, H * 0.5);
+        ctx.fillText('PAUSA', W * 0.5, H * 0.5);
+        ctx.restore();
+      }
+    }
+
+    function dibujarCardon(ctx, x, y, s) {
+      ctx.save();
+      ctx.strokeStyle = '#1E1916';
+      ctx.lineWidth = Math.max(2, s * 0.14);
+      ctx.lineCap = 'round';
+
+      ctx.beginPath();
+      ctx.moveTo(x, y + s);
+      ctx.lineTo(x, y - s * 0.9);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - s * 0.55, y);
+      ctx.lineTo(x - s * 0.55, y - s * 0.55);
+      ctx.moveTo(x, y - s * 0.25);
+      ctx.lineTo(x + s * 0.55, y - s * 0.25);
+      ctx.lineTo(x + s * 0.55, y - s * 0.75);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#4B6E3C';
+      ctx.lineWidth = Math.max(1.5, s * 0.08);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function dibujarPiedraLateral(ctx, x, y, s) {
+      ctx.save();
+      ctx.fillStyle = '#7A5B43';
+      ctx.strokeStyle = '#1E1916';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - s, y + s * 0.5);
+      ctx.lineTo(x - s * 0.4, y - s * 0.6);
+      ctx.lineTo(x + s * 0.6, y - s * 0.4);
+      ctx.lineTo(x + s, y + s * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function dibujarObjetoSendero(ctx, obj, x, y, r) {
+      ctx.save();
+      ctx.translate(x, y);
+
+      if (obj.subtipo === 'piedra') {
+        ctx.rotate(obj.rot);
+        ctx.fillStyle = '#6D5847';
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const lados = 7;
+        for (let i = 0; i < lados; i++) {
+          const ang = (i / lados) * Math.PI * 2;
+          const rad = r * (0.82 + (i % 2) * 0.22);
+          const px = Math.cos(ang) * rad;
+          const py = Math.sin(ang) * rad;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-r * 0.3, -r * 0.2);
+        ctx.lineTo(r * 0.1, r * 0.15);
+        ctx.lineTo(r * 0.35, -r * 0.1);
+        ctx.stroke();
+      } else if (obj.subtipo === 'derrumbe') {
+        ctx.fillStyle = '#5D432C';
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 2.5;
+        [[-r * 0.45, r * 0.2, r * 0.55], [r * 0.42, r * 0.25, r * 0.52], [0, -r * 0.25, r * 0.62]].forEach(([dx, dy, sr]) => {
+          ctx.beginPath();
+          ctx.arc(dx, dy, sr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+      } else if (obj.subtipo === 'grieta') {
+        ctx.fillStyle = '#2B211B';
+        ctx.strokeStyle = '#A63A24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-r * 1.1, 0);
+        ctx.lineTo(-r * 0.4, -r * 0.32);
+        ctx.lineTo(r * 0.1, -r * 0.12);
+        ctx.lineTo(r * 0.6, -r * 0.38);
+        ctx.lineTo(r * 1.1, r * 0.05);
+        ctx.lineTo(r * 0.45, r * 0.35);
+        ctx.lineTo(-r * 0.2, r * 0.18);
+        ctx.lineTo(-r * 0.7, r * 0.32);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (obj.subtipo === 'vasija') {
+        dibujarPucoDiaguita(ctx, 0, 0, r * 1.9);
+      } else if (obj.subtipo === 'agua') {
+        ctx.fillStyle = '#2D7D7E';
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -r);
+        ctx.bezierCurveTo(r * 0.9, -r * 0.1, r * 0.85, r * 0.9, 0, r * 0.9);
+        ctx.bezierCurveTo(-r * 0.85, r * 0.9, -r * 0.9, -r * 0.1, 0, -r);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#A8E6E7';
+        ctx.beginPath();
+        ctx.arc(-r * 0.24, r * 0.2, r * 0.2, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (obj.subtipo === 'algarrobo') {
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 2.5;
+        ctx.fillStyle = '#D99B38';
+        ctx.beginPath();
+        ctx.arc(-r * 0.1, 0, r * 0.75, -0.4, Math.PI * 1.15);
+        ctx.arc(r * 0.05, 0, r * 0.42, Math.PI * 1.15, -0.4, true);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      } else if (obj.subtipo === 'simbolo') {
+        const escalaPulso = 1 + 0.09 * Math.sin(obj.pulso);
+        ctx.scale(escalaPulso, escalaPulso);
+
+        ctx.fillStyle = 'rgba(232, 176, 75, 0.35)';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#E8B04B';
+        ctx.strokeStyle = '#1E1916';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -r);
+        ctx.lineTo(r, 0);
+        ctx.lineTo(0, r);
+        ctx.lineTo(-r, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#2D7D7E';
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    /* =======================================================================
+       7. DIBUJO PROCEDURAL DETALLADO DE PIEZAS CERÁMICAS DIAGUITAS
+       ======================================================================= */
+    function dibujarJarroPato(ctx, cx, cy, tam) {
+      const r = tam * 0.48;
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      ctx.fillStyle = 'rgba(30, 25, 22, 0.22)';
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.78, r * 0.78, r * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#1E1916';
+      ctx.lineWidth = Math.max(5, tam * 0.11);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.42, -r * 0.28);
+      ctx.quadraticCurveTo(-r * 1.05, -r * 0.15, -r * 0.55, r * 0.38);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#A63A24';
+      ctx.lineWidth = Math.max(2.5, tam * 0.055);
+      ctx.stroke();
+
+      ctx.fillStyle = '#F4EBD9';
+      ctx.strokeStyle = '#1E1916';
+      ctx.lineWidth = Math.max(2.5, tam * 0.045);
+
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.25, -r * 0.65);
+      ctx.lineTo(r * 0.22, -r * 0.65);
+      ctx.lineTo(r * 0.36, -r * 0.38);
+      ctx.lineTo(r * 0.92, -r * 0.32);
+      ctx.lineTo(r * 0.88, -r * 0.16);
+      ctx.lineTo(r * 0.55, -r * 0.10);
+      ctx.bezierCurveTo(r * 0.82, r * 0.25, r * 0.58, r * 0.75, 0, r * 0.75);
+      ctx.bezierCurveTo(-r * 0.68, r * 0.75, -r * 0.82, r * 0.15, -r * 0.36, -r * 0.32);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#1E1916';
+      ctx.beginPath();
+      ctx.arc(r * 0.34, -r * 0.34, tam * 0.045, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#A63A24';
+      ctx.fillRect(-r * 0.56, r * 0.02, r * 1.12, r * 0.32);
+      ctx.strokeRect(-r * 0.56, r * 0.02, r * 1.12, r * 0.32);
+
+      ctx.strokeStyle = '#F4EBD9';
+      ctx.lineWidth = Math.max(1.8, tam * 0.032);
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.42, r * 0.24);
+      ctx.lineTo(-r * 0.22, r * 0.10);
+      ctx.lineTo(0, r * 0.24);
+      ctx.lineTo(r * 0.22, r * 0.10);
+      ctx.lineTo(r * 0.42, r * 0.24);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function dibujarPucoDiaguita(ctx, cx, cy, tam) {
+      const r = tam * 0.48;
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      ctx.fillStyle = 'rgba(30, 25, 22, 0.22)';
+      ctx.beginPath();
+      ctx.ellipse(0, r * 0.65, r * 0.72, r * 0.22, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#A63A24';
+      ctx.strokeStyle = '#1E1916';
+      ctx.lineWidth = Math.max(2.5, tam * 0.045);
+
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.88, -r * 0.25);
+      ctx.bezierCurveTo(-r * 0.85, r * 0.45, -r * 0.45, r * 0.65, 0, r * 0.65);
+      ctx.bezierCurveTo(r * 0.45, r * 0.65, r * 0.85, r * 0.45, r * 0.88, -r * 0.25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#F4EBD9';
+      ctx.beginPath();
+      ctx.ellipse(0, -r * 0.25, r * 0.88, r * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#F4EBD9';
+      ctx.fillRect(-r * 0.68, r * 0.02, r * 1.36, r * 0.28);
+      ctx.strokeRect(-r * 0.68, r * 0.02, r * 1.36, r * 0.28);
+
+      ctx.fillStyle = '#1E1916';
+      for (let i = -2; i <= 1; i++) {
+        const bx = i * (r * 0.32);
+        ctx.beginPath();
+        ctx.moveTo(bx, r * 0.28);
+        ctx.lineTo(bx + r * 0.16, r * 0.04);
+        ctx.lineTo(bx + r * 0.32, r * 0.28);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    /* =======================================================================
+       8. VISTA PREVIA EN PORTADA E ILUSTRACIONES DE FICHAS HISTÓRICAS
+       ======================================================================= */
+    function dibujarPreviewPortada() {
+      const cPrev = document.getElementById('canvasPreviewPieza');
+      const pCtx = cPrev.getContext('2d');
+      pCtx.clearRect(0, 0, cPrev.width, cPrev.height);
+
+      pCtx.fillStyle = '#EFE4CE';
+      pCtx.fillRect(0, 0, cPrev.width, cPrev.height);
+
+      if (juego.piezaTipo === 'jarro') {
+        dibujarJarroPato(pCtx, cPrev.width * 0.5, cPrev.height * 0.54, 118);
+      } else {
+        dibujarPucoDiaguita(pCtx, cPrev.width * 0.5, cPrev.height * 0.56, 118);
+      }
+    }
+
+    function dibujarIlustracionFicha(tipo) {
+      const cFicha = document.getElementById('canvasFichaIlustracion');
+      const fCtx = cFicha.getContext('2d');
+      const w = cFicha.width;
+      const h = cFicha.height;
+      fCtx.clearRect(0, 0, w, h);
+
+      fCtx.fillStyle = '#F4EBD9';
+      fCtx.fillRect(0, 0, w, h);
+
+      fCtx.fillStyle = '#A63A24';
+      fCtx.fillRect(0, 0, w, 10);
+      fCtx.fillStyle = '#2D7D7E';
+      fCtx.fillRect(0, h - 10, w, 10);
+
+      if (tipo === 'jarro_pato') {
+        dibujarJarroPato(fCtx, w * 0.5, h * 0.54, 92);
+      } else if (tipo === 'pigmentos') {
+        const franjas = ['#F4EBD9', '#A63A24', '#1E1916', '#2D7D7E'];
+        const gap = w / franjas.length;
+        franjas.forEach((color, idx) => {
+          fCtx.fillStyle = color;
+          fCtx.strokeStyle = '#1E1916';
+          fCtx.lineWidth = 2.5;
+          fCtx.fillRect(idx * gap + 14, 24, gap - 28, h - 52);
+          fCtx.strokeRect(idx * gap + 14, 24, gap - 28, h - 52);
+        });
+      } else if (tipo === 'urnas') {
+        dibujarPucoDiaguita(fCtx, w * 0.33, h * 0.56, 82);
+        dibujarJarroPato(fCtx, w * 0.67, h * 0.54, 82);
+      } else if (tipo === 'agua_algarrobo') {
+        fCtx.fillStyle = '#2D7D7E';
+        fCtx.strokeStyle = '#1E1916';
+        fCtx.lineWidth = 2.5;
+        fCtx.beginPath();
+        fCtx.arc(w * 0.38, h * 0.54, 28, 0, Math.PI * 2);
+        fCtx.fill();
+        fCtx.stroke();
+
+        fCtx.fillStyle = '#D99B38';
+        fCtx.beginPath();
+        fCtx.ellipse(w * 0.64, h * 0.54, 38, 16, -0.25, 0, Math.PI * 2);
+        fCtx.fill();
+        fCtx.stroke();
+      } else {
+        fCtx.fillStyle = '#C68B44';
+        fCtx.beginPath();
+        fCtx.moveTo(w * 0.15, h - 10);
+        fCtx.lineTo(w * 0.5, 22);
+        fCtx.lineTo(w * 0.85, h - 10);
+        fCtx.closePath();
+        fCtx.fill();
+
+        fCtx.fillStyle = '#1E1916';
+        fCtx.fillRect(w * 0.42, 22, w * 0.16, 12);
+      }
+    }
+
+    /* =======================================================================
+       9. NAVEGACIÓN ENTRE VISTAS, FICHAS HISTÓRICAS Y CIERRE DE PARTIDA
+       ======================================================================= */
+    function mostrarVista(idVista) {
+      document.querySelectorAll('.vista').forEach(v => v.classList.remove('activa'));
+      document.getElementById(idVista).classList.add('activa');
+
+      if (idVista === 'vistaJuego') {
+        document.body.classList.add('en-partida');
+        ajustarCanvas();
+      } else {
+        document.body.classList.remove('en-partida');
+      }
+    }
+
+    function iniciarPartida(modo) {
+      sonido.desbloquear();
+      juego.modo = modo;
+      mostrarVista('vistaJuego');
+      reiniciarEstadoPartida();
+      ajustarCanvas();
+    }
+
+    function abrirFichaHistorica(indice) {
+      const ficha = FICHAS_HISTORICAS[indice];
+      if (!ficha) return;
+
+      juego.fichaAbierta = true;
+      sonido.fanfarriaFicha();
+
+      document.getElementById('fichaTitulo').textContent = ficha.titulo;
+      document.getElementById('fichaEtiqueta').textContent = ficha.etiqueta;
+      document.getElementById('fichaTexto').textContent = ficha.texto;
+      document.getElementById('fichaDatoArqueo').textContent = ficha.datoArqueo;
+      dibujarIlustracionFicha(ficha.ilustracion);
+
+      document.getElementById('modalFichaHistoria').classList.add('abierto');
+    }
+
+    function cerrarFichaHistorica() {
+      document.getElementById('modalFichaHistoria').classList.remove('abierto');
+      juego.fichasDesbloqueadas++;
+      juego.fichaAbierta = false;
+      actualizarHUD();
+
+      if (juego.fichasDesbloqueadas >= FICHAS_HISTORICAS.length) {
+        finalizarPartida(true);
+      }
+    }
+
+    function finalizarPartida(completoSaberes) {
+      juego.activo = false;
+      juego.fichaAbierta = false;
+      document.getElementById('modalFichaHistoria').classList.remove('abierto');
+
+      if (completoSaberes) {
+        sonido.victoriaFinal();
+        document.getElementById('chipEstadoFinal').textContent = '¡5/5 Saberes Reunidos!';
+        document.getElementById('tituloFinal').textContent = '¡Travesía Completada!';
+        document.getElementById('subtituloFinal').textContent = 'Conociste los principales saberes de la cultura diaguita.';
+      } else if (juego.modo === 'desafio') {
+        document.getElementById('chipEstadoFinal').textContent = 'Vasija Dañada en el Cerro';
+        document.getElementById('tituloFinal').textContent = '¡Buen Recorrido!';
+        document.getElementById('subtituloFinal').textContent = 'Podés volver a intentarlo o practicar en Modo Clase.';
+      } else {
+        document.getElementById('chipEstadoFinal').textContent = 'Práctica Finalizada';
+        document.getElementById('tituloFinal').textContent = 'Resumen de Recorrido';
+        document.getElementById('subtituloFinal').textContent = 'Exploraste el sendero diaguita a tu ritmo.';
+      }
+
+      document.getElementById('finalPuntaje').textContent = juego.puntaje;
+      document.getElementById('finalFichas').textContent = `${juego.fichasDesbloqueadas} / ${FICHAS_HISTORICAS.length}`;
+      document.getElementById('statVasijas').textContent = juego.stats.vasijas;
+      document.getElementById('statAgua').textContent = juego.stats.agua;
+      document.getElementById('statAlgarrobo').textContent = juego.stats.algarrobo;
+      document.getElementById('statSimbolos').textContent = juego.stats.simbolos;
+
+      const piezaTxt = juego.piezaTipo === 'jarro' ? 'Jarro Pato' : 'Puco Decorado';
+      const modoTxt = juego.modo === 'desafio' ? 'Modo Desafío' : 'Modo Clase / Práctica';
+      document.getElementById('resumenPartidaFinal').innerHTML =
+        `<strong>Pieza elegida:</strong> ${piezaTxt} · <strong>Modo:</strong> ${modoTxt}`;
+
+      mostrarVista('vistaFinal');
+    }
+
+    /* =======================================================================
+       10. CONTROLES TÁCTILES, MOUSE Y TECLADO
+       ======================================================================= */
+    function actualizarObjetivoDesdePuntero(clientX) {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0) return;
+      const relX = (clientX - rect.left) / rect.width;
+      juego.jugador.objetivoX = Math.max(0.14, Math.min(0.86, relX + juego.offsetArrastreX));
+    }
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (!juego.activo || juego.pausado || juego.fichaAbierta) return;
+      sonido.desbloquear();
+      canvas.setPointerCapture(e.pointerId);
+      juego.arrastrando = true;
+
+      const rect = canvas.getBoundingClientRect();
+      const relX = (e.clientX - rect.left) / rect.width;
+      const distJugador = Math.abs(relX - juego.jugador.x);
+      juego.offsetArrastreX = distJugador < 0.16 ? (juego.jugador.x - relX) : 0;
+      actualizarObjetivoDesdePuntero(e.clientX);
+    });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!juego.arrastrando || !juego.activo || juego.pausado || juego.fichaAbierta) return;
+      actualizarObjetivoDesdePuntero(e.clientX);
+    });
+
+    function liberarArrastre(e) {
+      juego.arrastrando = false;
+      if (e && canvas.hasPointerCapture && canvas.hasPointerCapture(e.pointerId)) {
+        try { canvas.releasePointerCapture(e.pointerId); } catch (err) {}
+      }
+    }
+
+    canvas.addEventListener('pointerup', liberarArrastre);
+    canvas.addEventListener('pointercancel', liberarArrastre);
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        juego.teclas.izq = true;
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        juego.teclas.der = true;
+      } else if (e.key === ' ' || e.key === 'Escape') {
+        if (juego.activo && !juego.fichaAbierta) {
+          e.preventDefault();
+          alternarPausa();
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+        juego.teclas.izq = false;
+      } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+        juego.teclas.der = false;
+      }
+    });
+
+    function alternarPausa() {
+      if (!juego.activo || juego.fichaAbierta) return;
+      juego.pausado = !juego.pausado;
+      document.getElementById('iconoPausa').textContent = juego.pausado ? '▶️' : '⏸️';
+      document.getElementById('textoPausa').textContent = juego.pausado ? 'Seguir' : 'Pausa';
+    }
+
+    function seleccionarPieza(tipo) {
+      juego.piezaTipo = tipo;
+      document.getElementById('btnElegirJarro').classList.toggle('seleccionada', tipo === 'jarro');
+      document.getElementById('btnElegirPuco').classList.toggle('seleccionada', tipo === 'puco');
+      dibujarPreviewPortada();
+      actualizarHUD();
+    }
+
+    /* =======================================================================
+       11. EVENTOS DE INTERFAZ Y BUCLE PRINCIPAL
+       ======================================================================= */
+    document.getElementById('btnElegirJarro').addEventListener('click', () => seleccionarPieza('jarro'));
+    document.getElementById('btnElegirPuco').addEventListener('click', () => seleccionarPieza('puco'));
+
+    document.getElementById('btnModoDesafio').addEventListener('click', () => iniciarPartida('desafio'));
+    document.getElementById('btnModoPractica').addEventListener('click', () => iniciarPartida('practica'));
+
+    document.getElementById('btnInicioLogo').addEventListener('click', () => {
+      juego.activo = false;
+      juego.fichaAbierta = false;
+      document.getElementById('modalFichaHistoria').classList.remove('abierto');
+      mostrarVista('vistaPortada');
+      dibujarPreviewPortada();
+    });
+
+    document.getElementById('btnVolverMenuJuego').addEventListener('click', () => {
+      juego.activo = false;
+      mostrarVista('vistaPortada');
+      dibujarPreviewPortada();
+    });
+
+    document.getElementById('btnCambiarPiezaJuego').addEventListener('click', () => {
+      seleccionarPieza(juego.piezaTipo === 'jarro' ? 'puco' : 'jarro');
+    });
+
+    document.getElementById('btnPausarJuego').addEventListener('click', alternarPausa);
+    document.getElementById('btnContinuarRecorrido').addEventListener('click', cerrarFichaHistorica);
+
+    document.getElementById('btnReiniciarPartida').addEventListener('click', () => {
+      iniciarPartida(juego.modo);
+    });
+
+    document.getElementById('btnIrPortadaFinal').addEventListener('click', () => {
+      mostrarVista('vistaPortada');
+      dibujarPreviewPortada();
+    });
+
+    document.getElementById('btnToggleSonido').addEventListener('click', () => {
+      const enc = sonido.alternar();
+      const btn = document.getElementById('btnToggleSonido');
+      btn.classList.toggle('activo', enc);
+      document.getElementById('iconoSonido').textContent = enc ? '🔊' : '🔇';
+      document.getElementById('textoSonido').textContent = enc ? 'Sonido' : 'Silencio';
+    });
+
+    let ultimoTiempo = performance.now();
+    function buclePrincipal(ahora) {
+      const dt = Math.min(0.05, (ahora - ultimoTiempo) / 1000);
+      ultimoTiempo = ahora;
+
+      if (juego.activo) {
+        actualizarJuego(dt);
+        dibujarEscenaJuego();
+      }
+
+      requestAnimationFrame(buclePrincipal);
+    }
+
+    dibujarPreviewPortada();
+    requestAnimationFrame(buclePrincipal);
+  </script>
+</body>
+</html>
